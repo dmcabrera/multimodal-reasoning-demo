@@ -1,0 +1,10 @@
+structlog
+gunicorn
+Flask
+flask-cors
+firebase_admin
+google-cloud-aiplatform
+google-cloud-texttospeech
+google-cloud-storage
+google-cloud-translate
+google-cloud-pubsub

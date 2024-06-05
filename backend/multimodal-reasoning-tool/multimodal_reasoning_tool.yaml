@@ -1,0 +1,46 @@
+openapi: 3.0.2
+info:
+  title: Buscar Articulos API
+  description: >-
+    API que busca articulos utilizando Vertex Search
+  version: 2.0
+servers:
+  - url: https://travel-places-search-6oxryicbjq-uc.a.run.app
+paths:
+  /buscar_articulos:
+    post:
+      summary: Buscar articulos en base a un criterio de busqueda
+      operationId: buscar_articulos
+      requestBody:
+        description: Criterio de busqueda
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuscarArticulosInput'
+      responses:
+        '200':
+          description: Retorna la lista de articulos que hacen match con el criterio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuscarArticulosOutput'
+
+components:
+  schemas:
+    BuscarArticulosInput:
+      type: object
+      properties:
+        criterio:
+            type: string
+    BuscarArticulosOutput:
+      type: object
+      properties:
+        articulos:
+          type: array
+          items:
+              type: object
+              properties:
+                  ProductTitle:
+                      type: string
+                  ImageURL:
+                      type: string
