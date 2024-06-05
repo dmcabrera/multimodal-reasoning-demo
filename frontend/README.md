@@ -1,9 +1,6 @@
-# genai-bank
+# frontend
 
-This is a simple Vue 3 app that uses the PaLM API to prompt a foundational
-LLM model from Google. The App automatically creates a prompt based on a user
-input and the list of credi card transactions. This allows the user to ask
-questions in natural language, regarding the transactions.
+This is a simple Vue 3 app that records the video using the webrtc library and the sends the video to the backend. After the backends process the video, it generates a response with the text response from the model and also the audio response generated in the backend using the TTS API. After receiving the audio in base64, the frontend reproduces the audio to generate the cool effect of the model speaking.
 
 ## Recommended IDE Setup
 
