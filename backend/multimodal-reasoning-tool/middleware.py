@@ -27,10 +27,13 @@ from flask import request, Response
 import structlog
 
 
+# Constants
+SERVICE_ACCOUNT_FILE = "cecl-genai-demos.json" # TODO: replace with your service account file
+
 a = TypeVar("a")
 
 # Initialize firebase admin
-cred = credentials.Certificate("cecl-genai-demos.json")
+cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
 default_app = firebase_admin.initialize_app(cred)
 
 

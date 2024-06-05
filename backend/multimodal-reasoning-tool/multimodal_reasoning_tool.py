@@ -26,9 +26,11 @@ from google.cloud import translate_v2 as translate
 from google.cloud import pubsub_v1
 
 # Constantes
-PROJECT_ID = "cecl-genai-demos"
-LOCATION = "us-central1"
-TOPIC_ID = "delete_video_topic"
+PROJECT_ID = "cecl-genai-demos" # TODO: Replace with your project ID
+LOCATION = "us-central1" # TODO: Replace with your deployment location
+TOPIC_ID = "delete_video_topic" # TODO: Replace with your topic ID
+
+# Configuraciones
 GENERATION_CONFIG = {
     "max_output_tokens": 8192,
     "temperature": 0.3,
