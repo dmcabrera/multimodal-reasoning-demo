@@ -30,7 +30,7 @@ def reason():
     # Get the video data
     video_data = request_json["video_data"]
     # Transformo la data de base64 a binario
-    video_data = video_data.replace('data:video/x-matroska;codecs=avc1,opus;base64,', '')
+    #video_data = video_data.replace('data:video/x-matroska;codecs=avc1,opus;base64,', '')
     video_data = base64.b64decode(video_data)
     #video_data = base64.b64decode(video_data + str(b'=='))
     #print(video_data)

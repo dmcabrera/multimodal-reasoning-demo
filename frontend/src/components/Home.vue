@@ -48,6 +48,7 @@
                         </div>
                     </div>
                 </div>
+                <audio v-if="streaming && isIOS()" id="answer_sound" src="" autoPlay muted></audio>
                 <div class="row pt-4">
                     <div class="col">
                         <button class="btn btn-primary" id="btn-start-streaming" @click="startStopStreaming">{{
@@ -148,22 +149,29 @@ function logout() {
     });
 }
 
+// Detecto si estoy en iOS
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 // Cargo las cámaras disponibles
 async function loadCameras() {
-    //await navigator.mediaDevices.getUserMedia({
-    //        audio: false,
-    //        video: true,
-    //    });
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    alert(devices.toString());
-    devices.forEach(device => {
-        if (device.kind === "videoinput") {
-            videoDevices.set(device.label, device.deviceId);
-            videoDevicesNames.push(device.label);
-        }
-    });
+    if (isIOS()) {
+        videoDevicesNames.push("Front Camera");
+        videoDevices.set("Front Camera", "user");
+        videoDevicesNames.push("Back Camera");
+        videoDevices.set("Back Camera", "environment");
+    } else {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log(devices);
+        devices.forEach(device => {
+            if (device.kind === "videoinput") {
+                videoDevices.set(device.label, device.deviceId);
+                videoDevicesNames.push(device.label);
+            }
+        });
+    }
     selectedVideoDevice.value = videoDevicesNames[0];
-    console.log(devices);
 }
 
 // Actualizo la camera seleccionada
@@ -202,24 +210,46 @@ async function startStreaming() {
     // Obtengo el stream
     console.log("Obteniendo stream de video...");
     var selected_camera = selectedVideoDevice.value;
-    var stream = await navigator.mediaDevices.getUserMedia(
-        {
+    var video_constraints = {}
+    if (isIOS()) {
+        video_constraints = {
+            audio: true,
+            video: {
+                //width: 640/*320-640-1280*/,
+                facingMode: videoDevices.get(selected_camera)
+            }
+        }
+    } else {
+        video_constraints = {
             audio: true,
             video: {
                 deviceId: videoDevices.get(selected_camera)
             }
-        });
-    console.log("Stream de video obtenido.");
+        };
+    }
+    try {
+        var stream = await navigator.mediaDevices.getUserMedia(video_constraints)
+        console.log("Stream de video obtenido.");
 
-    // Inicializo el video
-    var video = document.getElementById('video')
-    video.muted = true;
-    video.volume = 0;
-    video.srcObject = stream;
+        // Inicializo el video
+        var video = document.getElementById('video')
+        video.muted = true;
+        video.volume = 0;
+        if (isIOS()) {
+            video.setAttribute('autoplay', '');
+            video.setAttribute('muted', '');
+            video.setAttribute('playsinline', '');
+        }
+        video.srcObject = stream;
 
-    // Cambio el flag
-    video_stream = stream;
-    streaming.value = true;
+        // Cambio el flag
+        video_stream = stream;
+        streaming.value = true;
+        console.log("Streaming iniciado.");
+    } catch (error) {
+        console.log("Error al obtener el stream de video: " + error);
+        alert("Error al obtener el stream de video: " + error);
+    }
 }
 
 // Inicio o detengo la grabacion
@@ -240,28 +270,38 @@ function startStopRecording() {
 
 // Función que inicia el recording.
 async function startRecording() {
-    respuesta_modelo.value = '';
-    recorder = RecordRTC(video_stream, {
-        type: 'video',
-        mimeType: 'video/webm'
-    });
-    recorder.startRecording();
-    recorder.camera = video_stream;
+    try {
+        respuesta_modelo.value = '';
+        recorder = RecordRTC(video_stream, {
+            type: 'video',
+            mimeType: 'video/webm'
+        });
+        recorder.startRecording();
+        recorder.camera = video_stream;
+    } catch (error) {
+        console.log("Error al iniciar el recording: " + error);
+        alert("Error al iniciar el recording: " + error);
+    }
 }
 
 // Callback que se invoca al detener el recording
 function stopRecordingCallback() {
-    // Detengo el recorder
-    recorded_video = recorder.getBlob();
-    recorder.camera.stop();
-    recorder.destroy();
-    recorder = null;
+    try {
+        // Detengo el recorder
+        recorded_video = recorder.getBlob();
+        recorder.camera.stop();
+        recorder.destroy();
+        recorder = null;
 
-    // Inicio el streaming nuevamente
-    startStreaming();
+        // Inicio el streaming nuevamente
+        startStreaming();
 
-    // LLamo al servicio de razonamiento
-    reason();
+        // LLamo al servicio de razonamiento
+        reason();
+    } catch (error) {
+        console.log("Error al detener el recording: " + error);
+        alert("Error al detener el recording: " + error);
+    }
 }
 
 // Función que finaliza el recording
@@ -271,43 +311,71 @@ function stopRecording() {
 
 // Transformo el video grabado a base64
 async function toBase64(blob) {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    return new Promise(resolve => {
-        reader.onloadend = () => {
-            resolve(reader.result);
-        };
-    });
-};
+    var buf = await blob.arrayBuffer();
+    var bytes = new Uint8Array(buf);
+    var bin = [...bytes].reduce((acc, byte) => acc += String.fromCharCode(byte), '');
+    var b64 = btoa(bin);
+    return b64;
+}
 
 // Invoco al servicio que razona
 async function reason() {
-    // Armo el request
-    var video_data = await toBase64(recorded_video)
-    const request =
-    {
-        "video_data": video_data
-    };
+    try {
+        // Armo el request
+        var video_data = await toBase64(recorded_video)
+        const request =
+        {
+            "video_data": video_data
+        };
 
-    // Invoco el servicio
-    const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
-    const response = await fetch(`${API_ENDPOINT}/reason`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-        headers: {
-            'Authorization': 'Bearer ' + id_token.value,
-            'content-type': 'application/json'
+        // Invoco el servicio
+        const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+        const response = await fetch(`${API_ENDPOINT}/reason`, {
+            method: 'POST',
+            body: JSON.stringify(request),
+            headers: {
+                'Authorization': 'Bearer ' + id_token.value,
+                'content-type': 'application/json'
+            }
+        });
+
+        // Obtengo la respuesta.
+        var data = '';
+        if (isIOS()) {
+            data = await response.text();
+            data = JSON.parse(data);
+        } else {
+            data = await response.json();
         }
-    });
+        respuesta_modelo.value = data.response_text
 
-    // Obtengo la respuesta.
-    const data = await response.json();
-    //console.log(JSON.stringify(data));
-    respuesta_modelo.value = data.response_text
+        // Reproduzco el audio
+        try {
+            if (isIOS()) {
+                //var audio = new Audio();
+                //audio.autoplay = true;
+                //audio.volume = 1;
+                //audio.src = 'data:audio/mp3;base64,' + data.response_audio;
+                //audio.play();
+                var audio = document.getElementById('answer_sound');
+                audio.autoplay = true;
+                audio.src = 'data:audio/mp3;base64,' + data.response_audio;
+                audio.muted = false;
+                audio.play();
+            } else {
+                var audio = new Audio("data:audio/mp3;base64," + data.response_audio);
+                audio.play();
+            }
 
-    // Reproduzco el audio
-    var audio = new Audio("data:audio/mp3;base64," + data.response_audio);
-    audio.play();
+        } catch (error) {
+            console.log("Error al reproducir el audio: " + error);
+            alert("Error al reproducir el audio: " + error);
+        }
+
+    } catch (error) {
+        console.log("Error al razonar: " + error);
+        alert("Error al razonar: " + error);
+    }
 }
 
 </script>

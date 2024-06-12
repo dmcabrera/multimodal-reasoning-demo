@@ -10,8 +10,8 @@ const messages = {
     },
     multimodal_reasoning: {
       title: "Gemini Multimodal Reasoning Demo",
-      start_streaming_button_label: "▶️ Streaming",
-      stop_streaming_button_label: "⏺️ Streaming",
+      start_streaming_button_label: "▶️ Stream",
+      stop_streaming_button_label: "⏺️ Stream",
       start_recording_button_label: "⏺️ Grabar",
       stop_recording_button_label: "⏹️ Detener"
     }
@@ -25,8 +25,8 @@ const messages = {
     },
     multimodal_reasoning: {
       title: "Gemini Multimodal Reasoning Demo",
-      start_streaming_button_label: "▶️ Transmissão",
-      stop_streaming_button_label: "⏺️ Transmitir",
+      start_streaming_button_label: "▶️ Stream",
+      stop_streaming_button_label: "⏺️ Stream",
       start_recording_button_label: "⏺️ Gravar",
       stop_recording_button_label: "⏺️ Pare"
     }
@@ -40,8 +40,8 @@ const messages = {
     },
     multimodal_reasoning: {
       title: "Gemini Multimodal Reasoning Demo",
-      start_streaming_button_label: "▶️ Streaming",
-      stop_streaming_button_label: "⏺️ Streaming",
+      start_streaming_button_label: "▶️ Stream",
+      stop_streaming_button_label: "⏺️ Stream",
       start_recording_button_label: "⏺️ Record",
       stop_recording_button_label: "⏺️ Stop"
     }

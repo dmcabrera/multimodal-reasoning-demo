@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site" : "multimodal-reasoning-test",
+    "site" : "multimodal-reasoning",
     "public": "dist",
     "ignore": [
       "firebase.json",
