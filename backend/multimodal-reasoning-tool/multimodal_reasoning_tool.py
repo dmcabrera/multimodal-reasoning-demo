@@ -14,6 +14,8 @@
 #
 
 # Imports
+import random
+import os
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
 import vertexai.preview.generative_models as generative_models
@@ -95,7 +97,7 @@ class MultimodalReasoningTool(object):
     def __init__(self):
         vertexai.init(project=PROJECT_ID, location=LOCATION)
         self.model = GenerativeModel(
-            "gemini-1.5-flash-preview-0514",
+            "gemini-1.5-flash",
         )
 
         # Instancio el cliente tts
@@ -113,10 +115,25 @@ class MultimodalReasoningTool(object):
     # llamando al modelo
     def reason(self, video_data):
 
+        # Salvo el video como un archivo y lo subo a gcs
+        VIDEO_FILE = "video" + str(random.randrange(100, 1000000)) + ".mkv"
+        with open(VIDEO_FILE, "wb") as out:
+            out.write(video_data)
+        #delete_file_from_cs("cecl-genai-demos-vertex2", "videos/" + VIDEO_FILE)
+        upload_file_to_cs(
+            "cecl-genai-demos-vertex2",
+            VIDEO_FILE,
+            "videos/" + VIDEO_FILE)
+
         # Genero el request multimodal
-        video = Part.from_data(
-            mime_type="video/x-matroska",
-            data=bytes(video_data))
+        #video = Part.from_data(
+        #    mime_type="video/x-matroska",
+        #    data=bytes(video_data))
+
+        # Genero el request multimodal
+        video = Part.from_uri(
+            "gs://cecl-genai-demos-vertex2/videos/" + VIDEO_FILE,
+            mime_type="video/x-matroska")
 
         # Invoco al modelo
         responses = self.model.generate_content(
@@ -127,6 +144,11 @@ Answer the question indicated in the video in the same language and in less than
             safety_settings=SAFETY_SETTINGS,
             stream=False,
         )
+
+        # Elimino el archivo y envio el mensaje
+        # al topico
+        os.remove(VIDEO_FILE)
+        self.publisher.publish(self.topic_path, VIDEO_FILE.encode("utf-8"))
 
         # Retorno la respuesta
         response_text = responses.candidates[0].text
