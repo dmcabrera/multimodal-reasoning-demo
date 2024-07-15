@@ -28,6 +28,7 @@ from google.cloud import pubsub_v1
 # Constantes
 PROJECT_ID = "cecl-genai-demos" # TODO: Replace with your project ID
 LOCATION = "us-central1" # TODO: Replace with your deployment location
+VIDEO_UPLOAD_BUCKET = "cecl-genai-demos-vertex2" # TODO: Replace with your bucket
 TOPIC_ID = "delete_video_topic" # TODO: Replace with your topic ID
 
 # Configuraciones
@@ -76,7 +77,11 @@ SUPPORTED_LANGUAGES = {
     "it": {
         "language_code": "it-IT",
         "name": "it-IT-Neural2-A",
-    }
+    },
+    "pl": {
+        "language_code": "pl-PL",
+        "name": "pl-PL-Wavenet-D",
+    },
 }
 
 # Sube un archivo a gcs
@@ -119,20 +124,14 @@ class MultimodalReasoningTool(object):
         VIDEO_FILE = "video" + str(random.randrange(100, 1000000)) + ".mkv"
         with open(VIDEO_FILE, "wb") as out:
             out.write(video_data)
-        #delete_file_from_cs("cecl-genai-demos-vertex2", "videos/" + VIDEO_FILE)
         upload_file_to_cs(
-            "cecl-genai-demos-vertex2",
+            VIDEO_UPLOAD_BUCKET,
             VIDEO_FILE,
             "videos/" + VIDEO_FILE)
 
         # Genero el request multimodal
-        #video = Part.from_data(
-        #    mime_type="video/x-matroska",
-        #    data=bytes(video_data))
-
-        # Genero el request multimodal
         video = Part.from_uri(
-            "gs://cecl-genai-demos-vertex2/videos/" + VIDEO_FILE,
+            f"gs://{VIDEO_UPLOAD_BUCKET}/videos/" + VIDEO_FILE,
             mime_type="video/x-matroska")
 
         # Invoco al modelo
